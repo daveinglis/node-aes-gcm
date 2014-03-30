@@ -30,8 +30,10 @@ using namespace node;
 
 
 // Authentication tag length
-
 #define AUTH_TAG_LEN  16
+
+// IV length
+#define IV_LEN  16
 
 
 // Exception shortcut
@@ -80,12 +82,12 @@ Handle<Value> GcmEncrypt(const Arguments& args) {
   HandleScope scope;
 
   // We want 4 buffer arguments, key needs to be 32 bytes and IV needs to be
-  // 12 bytes
+  // 16 bytes
   if (args.Length() < 4 || !Buffer::HasInstance(args[0]) ||
       !Buffer::HasInstance(args[1]) || !Buffer::HasInstance(args[2]) ||
       !Buffer::HasInstance(args[3]) || Buffer::Length(args[0]) != 32 ||
-      Buffer::Length(args[1]) != 12) {
-    return VException("encrypt requires a 32-byte key Buffer, a 12-byte " \
+      Buffer::Length(args[1]) != 16) {
+    return VException("encrypt requires a 32-byte key Buffer, a 16-byte " \
                       "IV Buffer, a plaintext Buffer and an auth_data " \
                       "Buffer parameter");
   }
@@ -98,10 +100,14 @@ Handle<Value> GcmEncrypt(const Arguments& args) {
   // Make a authentication tag buffer
   unsigned char *auth_tag = new unsigned char[AUTH_TAG_LEN];
 
-  // Init OpenSSL interace with 256-bit AES GCM cipher and give it the
-  // key and IV
+  // Init OpenSSL interace with 256-bit AES GCM cipher
   int outl;
   EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+  
+  //specify IV length
+  EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, IV_LEN, NULL);
+ 
+  //give it the key and IV
   EVP_EncryptInit(ctx, EVP_aes_256_gcm(),
                     (unsigned char *)Buffer::Data(args[0]),
                     (unsigned char *)Buffer::Data(args[1]));
@@ -143,13 +149,13 @@ Handle<Value> GcmDecrypt(const Arguments& args) {
   HandleScope scope;
 
   // We want 5 buffer arguments, key needs to be 32 bytes, IV needs to be
-  // 12 bytes, auth_tag needs to be 16 bytes
+  // 16 bytes, auth_tag needs to be 16 bytes
   if (args.Length() < 5 || !Buffer::HasInstance(args[0]) ||
       !Buffer::HasInstance(args[1]) || !Buffer::HasInstance(args[2]) ||
       !Buffer::HasInstance(args[3]) || !Buffer::HasInstance(args[4]) ||
-      Buffer::Length(args[0]) != 32 || Buffer::Length(args[1]) != 12 ||
+      Buffer::Length(args[0]) != 32 || Buffer::Length(args[1]) != 16 ||
       Buffer::Length(args[4]) != 16) {
-    return VException("decrypt requires a 32-byte key Buffer, a 12-byte " \
+    return VException("decrypt requires a 32-byte key Buffer, a 16-byte " \
                       "IV Buffer, a ciphertext Buffer, an auth_data " \
                       "Buffer and a 16-byte auth_tag Buffer parameter");
   }
@@ -162,18 +168,16 @@ Handle<Value> GcmDecrypt(const Arguments& args) {
   // Make a authentication tag buffer
   unsigned char *auth_tag = new unsigned char[AUTH_TAG_LEN];
 
-  // Init OpenSSL interace with 256-bit AES GCM cipher and give it the
-  // key and IV
+  // Init OpenSSL interace with 256-bit AES GCM cipher
   int outl;
   EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
-  EVP_DecryptInit(ctx, EVP_aes_256_gcm(),
-                    (unsigned char *)Buffer::Data(args[0]),
-                    (unsigned char *)Buffer::Data(args[1]));
+  //set IV length
+  EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, IV_LEN, NULL);
   // Set the input reference authentication tag
   EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, AUTH_TAG_LEN,
                     Buffer::Data(args[4]));
-  // Example showed we needed to do init again
-  EVP_DecryptInit(ctx, NULL,
+  //give it the key and IV
+  EVP_DecryptInit(ctx, EVP_aes_256_gcm(),
                     (unsigned char *)Buffer::Data(args[0]),
                     (unsigned char *)Buffer::Data(args[1]));
   // Pass additional authenticated data
