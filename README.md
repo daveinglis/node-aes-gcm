@@ -1,7 +1,7 @@
+**NOTE: This repo was forked from [here](https://github.com/rishah/node-aes-gcm) and ultimately from [here](https://github.com/xorbit/node-aes-gcm). I just modified a few parameters to suit our needs, so the current repo provides AES256 GCM with a 128-bit IV and a 128-bit authentication tag despite contrary claims in the rest of this document...**
+
 node-aes-gcm
 ============
-
-**This repo was forked from [here](https://github.com/rishah/node-aes-gcm) and ultimately from [here](https://github.com/xorbit/node-aes-gcm). I just modified a few parameters to suit our needs, so the current repo provides AES256 GCM with a 128-bit IV and a 128-bit authentication tag despite contrary claims in the rest of this document...**
 
 [AES][] [GCM][] module for [node.js][node] using OpenSSL
 
