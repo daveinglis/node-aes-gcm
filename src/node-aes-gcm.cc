@@ -103,12 +103,13 @@ Handle<Value> GcmEncrypt(const Arguments& args) {
   // Init OpenSSL interace with 256-bit AES GCM cipher
   int outl;
   EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+  EVP_EncryptInit(ctx, EVP_aes_256_gcm(), NULL, NULL);
   
   //specify IV length
   EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, IV_LEN, NULL);
  
   //give it the key and IV
-  EVP_EncryptInit(ctx, EVP_aes_256_gcm(),
+  EVP_EncryptInit(ctx, NULL,
                     (unsigned char *)Buffer::Data(args[0]),
                     (unsigned char *)Buffer::Data(args[1]));
   // Pass additional authenticated data
@@ -171,15 +172,18 @@ Handle<Value> GcmDecrypt(const Arguments& args) {
   // Init OpenSSL interace with 256-bit AES GCM cipher
   int outl;
   EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+  //set just cipher
+  EVP_DecryptInit(ctx, EVP_aes_256_gcm(), NULL, NULL);
   //set IV length
   EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, IV_LEN, NULL);
   // Set the input reference authentication tag
   EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, AUTH_TAG_LEN,
                     Buffer::Data(args[4]));
-  //give it the key and IV
-  EVP_DecryptInit(ctx, EVP_aes_256_gcm(),
+  //now init the KEY and IV
+  EVP_DecryptInit(ctx, NULL,
                     (unsigned char *)Buffer::Data(args[0]),
                     (unsigned char *)Buffer::Data(args[1]));
+                    
   // Pass additional authenticated data
   // There is some extra complication here because Buffer::Data seems to
   // return NULL for empty buffers, and NULL makes update not work as we
