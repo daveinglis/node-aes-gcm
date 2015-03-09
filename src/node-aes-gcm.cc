@@ -33,7 +33,7 @@ using namespace node;
 #define AUTH_TAG_LEN  16
 
 // IV length
-#define IV_LEN  16
+#define IV_LEN  12
 
 
 // Exception shortcut
@@ -86,8 +86,8 @@ Handle<Value> GcmEncrypt(const Arguments& args) {
   if (args.Length() < 4 || !Buffer::HasInstance(args[0]) ||
       !Buffer::HasInstance(args[1]) || !Buffer::HasInstance(args[2]) ||
       !Buffer::HasInstance(args[3]) || Buffer::Length(args[0]) != 32 ||
-      Buffer::Length(args[1]) != 16) {
-    return VException("encrypt requires a 32-byte key Buffer, a 16-byte " \
+      Buffer::Length(args[1]) != IV_LEN) {
+    return VException("encrypt requires a 32-byte key Buffer, a 12-byte " \
                       "IV Buffer, a plaintext Buffer and an auth_data " \
                       "Buffer parameter");
   }
@@ -154,9 +154,9 @@ Handle<Value> GcmDecrypt(const Arguments& args) {
   if (args.Length() < 5 || !Buffer::HasInstance(args[0]) ||
       !Buffer::HasInstance(args[1]) || !Buffer::HasInstance(args[2]) ||
       !Buffer::HasInstance(args[3]) || !Buffer::HasInstance(args[4]) ||
-      Buffer::Length(args[0]) != 32 || Buffer::Length(args[1]) != 16 ||
+      Buffer::Length(args[0]) != 32 || Buffer::Length(args[1]) != IV_LEN ||
       Buffer::Length(args[4]) != 16) {
-    return VException("decrypt requires a 32-byte key Buffer, a 16-byte " \
+    return VException("decrypt requires a 32-byte key Buffer, a 12-byte " \
                       "IV Buffer, a ciphertext Buffer, an auth_data " \
                       "Buffer and a 16-byte auth_tag Buffer parameter");
   }
